@@ -1,0 +1,28 @@
+import { inject, Injectable } from '@angular/core';
+import { Actions, createEffect, ofType } from '@ngrx/effects';
+import { loadUsers, loadUsersSuccess, loadUsersFailure } from './user.actions';
+import { catchError, map, mergeMap } from 'rxjs/operators';
+import { of } from 'rxjs';
+import { GithubService } from '../../services/github.service';
+@Injectable({ providedIn: 'root' })
+export class UserEffects {
+  private actions$ = inject(Actions);
+  private githubService = inject(GithubService);
+
+  loadUsers$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(loadUsers),
+      mergeMap(({ query, page, perPage }) =>
+        this.githubService.searchUsers(query, page, perPage).pipe(
+          map((response: any) =>
+            loadUsersSuccess({
+              users: response.items,
+              total: response.total_count,
+            })
+          ),
+          catchError((error) => of(loadUsersFailure({ error: error.message })))
+        )
+      )
+    )
+  );
+}

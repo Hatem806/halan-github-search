@@ -5,6 +5,12 @@ import { providePrimeNG } from 'primeng/config';
 import Aura from '@primeng/themes/aura';
 
 import { routes } from './app.routes';
+import { provideHttpClient } from '@angular/common/http';
+import { provideEffects } from '@ngrx/effects';
+import { provideStore } from '@ngrx/store';
+import { UserEffects } from './core/state/user/user.effects';
+import { userReducer } from './core/state/user/user.reducer';
+import { provideStoreDevtools } from '@ngrx/store-devtools';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -16,5 +22,9 @@ export const appConfig: ApplicationConfig = {
         preset: Aura,
       },
     }),
+    provideStore({ users: userReducer }),
+    provideEffects([UserEffects]),
+    provideHttpClient(),
+    provideStoreDevtools({ maxAge: 25, logOnly: false }),
   ],
 };
