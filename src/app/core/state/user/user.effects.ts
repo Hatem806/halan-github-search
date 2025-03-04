@@ -16,7 +16,7 @@ export class UserEffects {
         this.githubService.searchUsers(query, page, perPage).pipe(
           map((response: any) =>
             loadUsersSuccess({
-              users: response.items,
+              items: response.items,
               total: response.total_count,
             })
           ),

@@ -5,9 +5,9 @@ import { UserState, initialState } from './user.state';
 export const userReducer = createReducer(
   initialState,
   on(loadUsers, (state) => ({ ...state, loading: true, error: null })),
-  on(loadUsersSuccess, (state, { users, total }) => ({
+  on(loadUsersSuccess, (state, { items, total }) => ({
     ...state,
-    users,
+    items,
     total,
     loading: false,
     error: null,

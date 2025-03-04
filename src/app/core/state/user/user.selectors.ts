@@ -5,7 +5,7 @@ export const selectUserState = createFeatureSelector<UserState>('users');
 
 export const selectAllUsers = createSelector(
   selectUserState,
-  (state) => state.items
+  (state) => state.items ?? []
 );
 
 export const selectUserLoading = createSelector(
