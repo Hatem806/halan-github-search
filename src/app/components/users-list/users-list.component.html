@@ -1,7 +1,18 @@
-<p-dataview [value]="users()" [rows]="2">
+<!-- Loading Indicator -->
+@if (loading$ | async) {
+<div class="loading">Loading users...</div>
+}
+
+<!-- Error Message -->
+@if (error$ | async) {
+<div class="error">{{ error$ | async }}</div>
+}
+
+<!-- User List -->
+<p-dataview [value]="(users$ | async) ?? []" [rows]="perPage">
   <ng-template #list let-items>
     <div class="grid grid-cols-12 gap-4 grid-nogutter">
-      @for(item of items; track item; let first = $first) {
+      @for (item of items; track item.id; let first = $first) {
       <div class="col-span-12">
         <div
           class="flex flex-col sm:flex-row sm:items-center p-6 gap-4"
@@ -46,9 +57,9 @@
                 >
                   <span
                     class="text-surface-900 dark:text-surface-0 font-medium text-sm"
-                    >score {{ item.score }}</span
                   >
-                  <!-- <i class="pi pi-star-fill text-yellow-500"></i> -->
+                    score {{ item.score }}
+                  </span>
                 </div>
               </div>
             </div>
@@ -67,13 +78,15 @@
     </div>
   </ng-template>
 </p-dataview>
+
+<!-- Pagination -->
 <p-paginator
   styleClass="mt-2"
   (onPageChange)="onPageChange($event)"
-  [first]="1"
-  [rows]="10"
-  [totalRecords]="users().totalRecords"
-  [rowsPerPageOptions]="[1, 5, 15]"
+  [first]="(currentPage - 1) * perPage"
+  [rows]="perPage"
+  [totalRecords]="1000"
+  [rowsPerPageOptions]="[5, 10, 20]"
   [showCurrentPageReport]="true"
   currentPageReportTemplate="Showing {first} to {last} of {totalRecords} entries"
 />

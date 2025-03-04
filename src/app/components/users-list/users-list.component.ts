@@ -1,61 +1,56 @@
-import { Component, signal } from '@angular/core';
-import { NgClass } from '@angular/common';
-import { GithubService } from '../../core/services/github.service';
+import { Component, inject } from '@angular/core';
+import { AsyncPipe, NgClass } from '@angular/common';
 import { ButtonModule } from 'primeng/button';
 import { DataView } from 'primeng/dataview';
 import { PaginatorModule, PaginatorState } from 'primeng/paginator';
-import { HttpParams } from '@angular/common/http';
+import { select, Store } from '@ngrx/store';
+import { Observable } from 'rxjs';
+import { GitHubUser } from '../../core/models/user.mode';
+import { loadUsers } from '../../core/state/user/user.actions';
+import {
+  selectAllUsers,
+  selectUserLoading,
+  selectUserError,
+  selectUserQuery,
+} from '../../core/state/user/user.selectors';
 
 @Component({
   selector: 'app-users-list',
-  imports: [ButtonModule, DataView, NgClass, PaginatorModule],
+  imports: [ButtonModule, DataView, NgClass, PaginatorModule, AsyncPipe],
   templateUrl: './users-list.component.html',
   styleUrl: './users-list.component.css',
 })
 export class UsersListComponent {
-  items = [];
-  users = signal<any>([]);
+  private store = inject(Store);
 
-  protected httpParams = signal<HttpParams>(new HttpParams().set("page", 1).set("limit", 15));
+  users$: Observable<GitHubUser[]> = this.store.pipe(select(selectAllUsers));
+  loading$: Observable<boolean> = this.store.pipe(select(selectUserLoading));
+  error$: Observable<string | null> = this.store.pipe(select(selectUserError));
+  query$: Observable<string> = this.store.pipe(select(selectUserQuery));
 
+  currentPage = 1;
+  perPage = 10;
+  searchQuery = '';
 
-  constructor(private githubService: GithubService) {}
+  constructor() {
+    this.query$.subscribe((query) => {
+      this.searchQuery = query;
+    });
+  }
 
-  ngOnInit() {
-    // this.githubService.getUsers().then((data) => {
-    //   this.users.set(data);
-    // });
-    this.users.set([
-      {
-        login: 'john',
-        id: 1668,
-        node_id: 'MDQ6VXNlcjE2Njg=',
-        avatar_url: 'https://avatars.githubusercontent.com/u/1668?v=4',
-        gravatar_id: '',
-        url: 'https://api.github.com/users/john',
-        html_url: 'https://github.com/john',
-        followers_url: 'https://api.github.com/users/john/followers',
-        following_url:
-          'https://api.github.com/users/john/following{/other_user}',
-        gists_url: 'https://api.github.com/users/john/gists{/gist_id}',
-        starred_url: 'https://api.github.com/users/john/starred{/owner}{/repo}',
-        subscriptions_url: 'https://api.github.com/users/john/subscriptions',
-        organizations_url: 'https://api.github.com/users/john/orgs',
-        repos_url: 'https://api.github.com/users/john/repos',
-        events_url: 'https://api.github.com/users/john/events{/privacy}',
-        received_events_url:
-          'https://api.github.com/users/john/received_events',
-        type: 'User',
-        user_view_type: 'public',
-        site_admin: false,
-        score: 1.0,
-      },
-    ]);
+  loadUsers() {
+    this.store.dispatch(
+      loadUsers({
+        query: this.searchQuery,
+        page: this.currentPage,
+        perPage: this.perPage,
+      })
+    );
   }
 
   onPageChange(event: PaginatorState) {
-    this.httpParams.update(params =>
-        params.set("page", (event.page ?? 1) + 1).set("limit", event.rows ?? 15),
-    );
-}
+    this.currentPage = (event.page ?? 1) + 1;
+    this.perPage = event.rows ?? 10;
+    this.loadUsers();
+  }
 }
