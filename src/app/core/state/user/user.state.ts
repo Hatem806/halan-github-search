@@ -5,6 +5,7 @@ export interface UserState {
   total_count: number;
   loading: boolean;
   error: string | null;
+  query: string;
 }
 
 export const initialState: UserState = {
@@ -12,4 +13,5 @@ export const initialState: UserState = {
   total_count: 0,
   loading: false,
   error: null,
+  query: '',
 };

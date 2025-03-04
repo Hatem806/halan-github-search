@@ -4,7 +4,12 @@ import { UserState, initialState } from './user.state';
 
 export const userReducer = createReducer(
   initialState,
-  on(loadUsers, (state) => ({ ...state, loading: true, error: null })),
+  on(loadUsers, (state, { query }) => ({
+    ...state,
+    loading: true,
+    error: null,
+    query,
+  })),
   on(loadUsersSuccess, (state, { items, total }) => ({
     ...state,
     items,
