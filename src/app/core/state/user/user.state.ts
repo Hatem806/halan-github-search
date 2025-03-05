@@ -6,6 +6,8 @@ export interface UserState {
   loading: boolean;
   error: string | null;
   query: string;
+  sort?: string;
+  order?: string;
 }
 
 export const initialState: UserState = {
@@ -14,4 +16,6 @@ export const initialState: UserState = {
   loading: false,
   error: null,
   query: '',
+  sort: 'joined',
+  order: 'desc',
 };

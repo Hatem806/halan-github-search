@@ -22,3 +22,8 @@ export const selectUserQuery = createSelector(
   selectUserState,
   (state) => state.query
 );
+
+export const selectUserSort = createSelector(selectUserState, (state) => ({
+  sort: state.sort,
+  order: state.order,
+}));

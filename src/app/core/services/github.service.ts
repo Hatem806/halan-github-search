@@ -1,4 +1,4 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 
@@ -13,10 +13,23 @@ export class GithubService {
   searchUsers(
     query: string,
     page: number = 1,
-    perPage: number = 10
+    perPage: number = 10,
+    sort?: string,
+    order?: string
   ): Observable<any> {
-    return this.http.get<any>(
-      `${this.API_URL}/search/users?q=${query}&page=${page}&per_page=${perPage}`
-    );
+    let params = new HttpParams()
+      .set('q', query)
+      .set('page', page.toString())
+      .set('per_page', perPage.toString());
+
+    // ✅ Add sorting params only if they exist
+    if (sort) {
+      params = params.set('sort', sort);
+    }
+    if (order) {
+      params = params.set('order', order);
+    }
+
+    return this.http.get<any>(`${this.API_URL}/search/users`, { params });
   }
 }

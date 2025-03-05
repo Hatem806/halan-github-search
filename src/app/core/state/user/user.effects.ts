@@ -4,6 +4,7 @@ import { loadUsers, loadUsersSuccess, loadUsersFailure } from './user.actions';
 import { catchError, map, mergeMap } from 'rxjs/operators';
 import { of } from 'rxjs';
 import { GithubService } from '../../services/github.service';
+
 @Injectable({ providedIn: 'root' })
 export class UserEffects {
   private actions$ = inject(Actions);
@@ -12,15 +13,18 @@ export class UserEffects {
   loadUsers$ = createEffect(() =>
     this.actions$.pipe(
       ofType(loadUsers),
-      mergeMap(({ query, page, perPage }) =>
-        this.githubService.searchUsers(query, page, perPage).pipe(
+      mergeMap(({ query, page, perPage, sort, order }) =>
+        this.githubService.searchUsers(query, page, perPage, sort, order).pipe(
           map((response: any) =>
             loadUsersSuccess({
               items: response.items,
-              total: response.total_count,
+              total_count: response.total_count,
             })
           ),
-          catchError((error) => of(loadUsersFailure({ error: error.message })))
+          catchError((error) => {
+            console.log('error:', error);
+            return of(loadUsersFailure({ error: error.message }));
+          })
         )
       )
     )

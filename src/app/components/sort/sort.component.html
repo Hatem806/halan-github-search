@@ -1,5 +1,12 @@
 <div class="flex flex-col md:flex-row md:justify-between">
-  <p-button icon="pi pi-sort-amount-down" class="me-2" />
+  <!-- Order Direction Toggle -->
+  <p-button
+    [icon]="sortOrder === 'asc' ? 'pi pi-sort-amount-up' : 'pi pi-sort-amount-down'"
+    class="me-2"
+    (click)="toggleOrder()"
+  />
+
+  <!-- Sorting Selection -->
   <p-select
     [options]="sortOptions"
     [(ngModel)]="sortKey"
