@@ -24,5 +24,5 @@ export const loadUsersFailure = createAction(
 
 export const updateSort = createAction(
   '[Sort] Update Sort',
-  props<{ sort: string; order: string }>()
+  props<{ query:string; sort: string; order: string }>()
 );

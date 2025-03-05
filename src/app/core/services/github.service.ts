@@ -2,6 +2,14 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 
+type searchParams = {
+  query: string;
+  page?: number;
+  perPage?: number;
+  sort?: string;
+  order?: string;
+};
+
 @Injectable({
   providedIn: 'root',
 })
@@ -10,19 +18,18 @@ export class GithubService {
 
   private API_URL = 'https://api.github.com';
 
-  searchUsers(
-    query: string,
-    page: number = 1,
-    perPage: number = 10,
-    sort?: string,
-    order?: string
-  ): Observable<any> {
+  searchUsers({
+    query,
+    page,
+    perPage,
+    sort,
+    order,
+  }: searchParams): Observable<any> {
     let params = new HttpParams()
       .set('q', query)
-      .set('page', page.toString())
-      .set('per_page', perPage.toString());
+      .set('page', (page || 1).toString())
+      .set('per_page', (perPage || 10).toString());
 
-    // ✅ Add sorting params only if they exist
     if (sort) {
       params = params.set('sort', sort);
     }

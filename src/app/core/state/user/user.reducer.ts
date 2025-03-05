@@ -5,7 +5,7 @@ import {
   loadUsersFailure,
   updateSort,
 } from './user.actions';
-import { UserState, initialState } from './user.state';
+import { initialState } from './user.state';
 
 export const userReducer = createReducer(
   initialState,

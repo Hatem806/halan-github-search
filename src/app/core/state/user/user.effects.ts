@@ -1,6 +1,11 @@
 import { inject, Injectable } from '@angular/core';
 import { Actions, createEffect, ofType } from '@ngrx/effects';
-import { loadUsers, loadUsersSuccess, loadUsersFailure } from './user.actions';
+import {
+  loadUsers,
+  loadUsersSuccess,
+  loadUsersFailure,
+  updateSort,
+} from './user.actions';
 import { catchError, map, mergeMap } from 'rxjs/operators';
 import { of } from 'rxjs';
 import { GithubService } from '../../services/github.service';
@@ -14,7 +19,27 @@ export class UserEffects {
     this.actions$.pipe(
       ofType(loadUsers),
       mergeMap(({ query, page, perPage, sort, order }) =>
-        this.githubService.searchUsers(query, page, perPage, sort, order).pipe(
+        this.githubService.searchUsers({query, page, perPage, sort, order}).pipe(
+          map((response: any) =>
+            loadUsersSuccess({
+              items: response.items,
+              total_count: response.total_count,
+            })
+          ),
+          catchError((error) => {
+            console.log('error:', error);
+            return of(loadUsersFailure({ error: error.message }));
+          })
+        )
+      )
+    )
+  );
+
+  updateSort$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(updateSort),
+      mergeMap(({ query, sort, order }) =>
+        this.githubService.searchUsers({ query, sort, order }).pipe(
           map((response: any) =>
             loadUsersSuccess({
               items: response.items,
