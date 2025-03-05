@@ -63,4 +63,15 @@ export class SortComponent {
       })
     );
   }
+
+  clearSort() {
+    this.sortOrder = 'desc';
+    this.store.dispatch(
+      updateSort({
+        query: this.query,
+        sort: '',
+        order: this.sortOrder,
+      })
+    );
+  }
 }

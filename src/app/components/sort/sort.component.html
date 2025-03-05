@@ -1,7 +1,9 @@
 <div class="flex flex-col md:flex-row md:justify-between">
   <!-- Order Direction Toggle -->
   <p-button
-    [icon]="sortOrder === 'asc' ? 'pi pi-sort-amount-up' : 'pi pi-sort-amount-down'"
+    [icon]="
+      sortOrder === 'asc' ? 'pi pi-sort-amount-up' : 'pi pi-sort-amount-down'
+    "
     class="me-2"
     (click)="toggleOrder()"
   />
@@ -13,4 +15,6 @@
     placeholder="Sort By"
     (onChange)="onSortChange($event)"
   />
+
+  <p-button icon="pi pi-filter-slash" class="ms-2" (click)="clearSort()" />
 </div>
