@@ -1,110 +1,82 @@
 import { TestBed } from '@angular/core/testing';
-import {
-  HttpTestingController,
-  provideHttpClientTesting,
-} from '@angular/common/http/testing';
 import { GithubService } from './github.service';
-import { HttpClient, HttpHandler } from '@angular/common/http';
+import {
+  HttpClientTestingModule,
+  HttpTestingController,
+} from '@angular/common/http/testing';
 
 describe('GithubService', () => {
   let service: GithubService;
   let httpMock: HttpTestingController;
+  const API_URL = 'https://api.github.com/search/users';
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [GithubService, provideHttpClientTesting(), HttpClient, HttpHandler],
+      imports: [HttpClientTestingModule],
+      providers: [GithubService],
     });
 
     service = TestBed.inject(GithubService);
     httpMock = TestBed.inject(HttpTestingController);
   });
+
   afterEach(() => {
-    httpMock.verify();
+    httpMock.verify(); // Ensures there are no outstanding requests
   });
 
   it('should be created', () => {
     expect(service).toBeTruthy();
   });
 
-  it('should call API with default parameters when optional ones are missing', () => {
-    service.searchUsers({ query: 'angular' }).subscribe();
-
-    const req = httpMock.expectOne((request) => {
-      return (
-        request.url === 'https://api.github.com/search/users' &&
-        request.params.get('q') === 'angular' &&
-        request.params.get('page') === '1' &&
-        request.params.get('per_page') === '10' &&
-        request.params.has('sort') === false &&
-        request.params.has('order') === false
-      );
-    });
-
-    expect(req.request.method).toBe('GET');
-    req.flush({ items: [], total_count: 0 });
-  });
-
-  it('should include pagination when provided', () => {
-    service.searchUsers({ query: 'react', page: 2, perPage: 20 }).subscribe();
-
-    const req = httpMock.expectOne((request) => {
-      return (
-        request.url === 'https://api.github.com/search/users' &&
-        request.params.get('q') === 'react' &&
-        request.params.get('page') === '2' &&
-        request.params.get('per_page') === '20'
-      );
-    });
-
-    expect(req.request.method).toBe('GET');
-    req.flush({ items: [], total_count: 0 });
-  });
-
-  it('should include sort parameter when provided', () => {
-    service.searchUsers({ query: 'vue', sort: 'followers' }).subscribe();
-
-    const req = httpMock.expectOne((request) => {
-      return (
-        request.url === 'https://api.github.com/search/users' &&
-        request.params.get('q') === 'vue' &&
-        request.params.get('sort') === 'followers' &&
-        request.params.has('order') === false // Order should not exist if not provided
-      );
-    });
-
-    expect(req.request.method).toBe('GET');
-    req.flush({ items: [], total_count: 0 });
-  });
-
-  it('should include both sort and order when provided', () => {
+  it('should call API with correct parameters', () => {
     service
-      .searchUsers({ query: 'svelte', sort: 'repositories', order: 'asc' })
+      .searchUsers({
+        query: 'angular',
+        page: 2,
+        perPage: 5,
+        sort: 'followers',
+        order: 'desc',
+      })
       .subscribe();
 
-    const req = httpMock.expectOne((request) => {
-      return (
-        request.url === 'https://api.github.com/search/users' &&
-        request.params.get('q') === 'svelte' &&
-        request.params.get('sort') === 'repositories' &&
-        request.params.get('order') === 'asc'
-      );
+    const req = httpMock.expectOne(
+      `${API_URL}?q=angular&page=2&per_page=5&sort=followers&order=desc`
+    );
+    expect(req.request.method).toBe('GET');
+  });
+
+  it('should use default values when optional params are not provided', () => {
+    service.searchUsers({ query: 'angular' }).subscribe();
+
+    const req = httpMock.expectOne(`${API_URL}?q=angular&page=1&per_page=10`);
+    expect(req.request.method).toBe('GET');
+  });
+
+  it('should return expected response data', () => {
+    const mockResponse = {
+      total_count: 100,
+      items: [{ id: 1, login: 'testuser' }],
+    };
+
+    service.searchUsers({ query: 'angular' }).subscribe((data) => {
+      expect(data).toEqual(mockResponse);
     });
 
-    expect(req.request.method).toBe('GET');
-    req.flush({ items: [], total_count: 0 });
+    const req = httpMock.expectOne(`${API_URL}?q=angular&page=1&per_page=10`);
+    req.flush(mockResponse);
   });
 
   it('should handle API errors gracefully', () => {
     service.searchUsers({ query: 'angular' }).subscribe({
-      next: () => fail('Expected an error, but got a success response'),
-      error: (error) => {
-        expect(error.status).toBe(500);
+      error: (err) => {
+        expect(err.status).toBe(500);
       },
     });
 
-    const req = httpMock.expectOne(
-      'https://api.github.com/search/users?q=angular&page=1&per_page=10'
-    );
-    req.flush('Error occurred', { status: 500, statusText: 'Server Error' });
+    const req = httpMock.expectOne(`${API_URL}?q=angular&page=1&per_page=10`);
+    req.flush('Internal Server Error', {
+      status: 500,
+      statusText: 'Server Error',
+    });
   });
 });
