@@ -16,8 +16,8 @@ describe('SortComponent', () => {
   let dispatchSpy: jasmine.Spy;
 
   // Mock state values
-  const initialSort = { sort: 'followers', order: 'desc' };
-  const initialQuery = 'angular';
+  const initialSort = { sort: 'joined', order: 'desc' };
+  const initialQuery = '';
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
@@ -55,7 +55,7 @@ describe('SortComponent', () => {
 
     expect(component.sortKey).toBe('repositories');
     expect(dispatchSpy).toHaveBeenCalledWith(
-      updateSort({ query: 'angular', sort: 'repositories', order: 'desc' })
+      updateSort({ query: '', sort: 'repositories', order: 'desc' })
     );
   });
 
@@ -76,22 +76,17 @@ describe('SortComponent', () => {
   });
 
   it('should clear sorting and dispatch updateSort', () => {
-    store.overrideSelector(selectUserQuery, 'angular');
-    store.refreshState(); 
-    fixture.detectChanges();
-
-
     component.clearSort();
 
     expect(component.sortKey).toBe(''); // Cleared sorting
     expect(component.sortOrder).toBe('desc'); // Should reset to default
     expect(dispatchSpy).toHaveBeenCalledWith(
-      updateSort({ query: 'angular', sort: '', order: 'desc' })
+      updateSort({ query: '', sort: '', order: 'desc' })
     );
   });
 
   it('should update sortKey when sort is changed', () => {
-    expect(component.sortKey).toBe('followers'); // Initial value from mock store
+    expect(component.sortKey).toBe('joined'); // Initial value from mock store
 
     component.onSortChange({ value: 'repositories' });
     fixture.detectChanges();
