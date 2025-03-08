@@ -66,6 +66,7 @@ export class SortComponent {
 
   clearSort() {
     this.sortOrder = 'desc';
+    this.sortKey = ''; 
     this.store.dispatch(
       updateSort({
         query: this.query,

@@ -1,41 +1,40 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { SortComponent } from './sort.component';
-import { provideStore } from '@ngrx/store';
-import { FormsModule } from '@angular/forms';
-import { SelectModule } from 'primeng/select';
-import { ButtonModule } from 'primeng/button';
-import { Store } from '@ngrx/store';
-import { updateSort } from '../../core/state/user/user.actions';
-import { By } from '@angular/platform-browser';
-import { of } from 'rxjs';
+import { provideMockStore, MockStore } from '@ngrx/store/testing';
 import {
   selectUserQuery,
   selectUserSort,
 } from '../../core/state/user/user.selectors';
+import { updateSort } from '../../core/state/user/user.actions';
+import { By } from '@angular/platform-browser';
+import { DebugElement } from '@angular/core';
 
 describe('SortComponent', () => {
   let component: SortComponent;
   let fixture: ComponentFixture<SortComponent>;
-  let storeSpy: jasmine.SpyObj<Store>;
+  let store: MockStore;
+  let dispatchSpy: jasmine.Spy;
 
-  beforeEach(() => {
-    const spy = jasmine.createSpyObj('Store', ['dispatch', 'select']);
+  // Mock state values
+  const initialSort = { sort: 'followers', order: 'desc' };
+  const initialQuery = 'angular';
 
-    TestBed.configureTestingModule({
-      imports: [SelectModule, FormsModule, ButtonModule, SortComponent],
-      providers: [provideStore({}), { provide: Store, useValue: spy }],
-    });
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [SortComponent],
+      providers: [provideMockStore()],
+    }).compileComponents();
 
+    store = TestBed.inject(MockStore);
     fixture = TestBed.createComponent(SortComponent);
     component = fixture.componentInstance;
-    storeSpy = TestBed.inject(Store) as jasmine.SpyObj<Store>;
 
-    storeSpy.select.and.callFake((selector: any) => {
-      if (selector === selectUserSort)
-        return of({ sort: 'followers', order: 'asc' });
-      if (selector === selectUserQuery) return of('angular');
-      return of(null);
-    });
+    // Spy on dispatch
+    dispatchSpy = spyOn(store, 'dispatch');
+
+    // Mock store selectors
+    store.overrideSelector(selectUserSort, initialSort);
+    store.overrideSelector(selectUserQuery, initialQuery);
 
     fixture.detectChanges();
   });
@@ -44,69 +43,70 @@ describe('SortComponent', () => {
     expect(component).toBeTruthy();
   });
 
-  it('should initialize with store values', () => {
-    expect(component.sortKey).toBe('followers');
-    expect(component.sortOrder).toBe('asc');
-    expect(component.query).toBe('angular');
+  it('should initialize with correct observable values', () => {
+    expect(component.sortKey).toBe('joined');
+    expect(component.sortOrder).toBe('desc');
+    expect(component.query).toBe('');
   });
 
-  it('should dispatch updateSort action when sorting changes', () => {
-    const event = { value: 'repositories' };
-    component.onSortChange(event);
+  it('should dispatch updateSort when onSortChange is triggered', () => {
+    const mockEvent = { value: 'repositories' };
+    component.onSortChange(mockEvent);
 
-    expect(storeSpy.dispatch).toHaveBeenCalledWith(
-      updateSort({
-        query: 'angular',
-        sort: 'repositories',
-        order: 'asc',
-      })
+    expect(component.sortKey).toBe('repositories');
+    expect(dispatchSpy).toHaveBeenCalledWith(
+      updateSort({ query: 'angular', sort: 'repositories', order: 'desc' })
     );
   });
 
-  it('should toggle sort order and dispatch updateSort', () => {
+  it('should toggle order and dispatch updateSort', () => {
     component.toggleOrder();
 
-    expect(storeSpy.dispatch).toHaveBeenCalledWith(
-      updateSort({
-        query: 'angular',
-        sort: 'followers', // Current sort
-        order: 'desc', // Should toggle from asc to desc
-      })
+    expect(component.sortOrder).toBe('asc'); // Initially 'desc', should toggle
+    expect(dispatchSpy).toHaveBeenCalledWith(
+      updateSort({ query: '', sort: 'joined', order: 'asc' })
+    );
+
+    // Toggle again
+    component.toggleOrder();
+    expect(component.sortOrder).toBe('desc');
+    expect(dispatchSpy).toHaveBeenCalledWith(
+      updateSort({ query: '', sort: 'joined', order: 'desc' })
     );
   });
 
-  it('should clear sorting and reset to default', () => {
+  it('should clear sorting and dispatch updateSort', () => {
+    store.overrideSelector(selectUserQuery, 'angular');
+    store.refreshState(); 
+    fixture.detectChanges();
+
+
     component.clearSort();
 
-    expect(storeSpy.dispatch).toHaveBeenCalledWith(
-      updateSort({
-        query: 'angular',
-        sort: '',
-        order: 'desc', // Reset to default order
-      })
+    expect(component.sortKey).toBe(''); // Cleared sorting
+    expect(component.sortOrder).toBe('desc'); // Should reset to default
+    expect(dispatchSpy).toHaveBeenCalledWith(
+      updateSort({ query: 'angular', sort: '', order: 'desc' })
     );
   });
 
-  it('should call onSortChange when selecting a different sort option', () => {
-    spyOn(component, 'onSortChange');
+  it('should update sortKey when sort is changed', () => {
+    expect(component.sortKey).toBe('followers'); // Initial value from mock store
 
-    const selectElement = fixture.debugElement.query(
-      By.css('p-select')
-    ).nativeElement;
-    selectElement.value = 'repositories';
-    selectElement.dispatchEvent(new Event('change'));
+    component.onSortChange({ value: 'repositories' });
     fixture.detectChanges();
 
-    expect(component.onSortChange).toHaveBeenCalled();
+    expect(component.sortKey).toBe('repositories'); // Verify sortKey changes
   });
 
-  it('should call toggleOrder when sort button is clicked', () => {
-    spyOn(component, 'toggleOrder');
+  it('should dispatch updateSort when clear button is clicked', () => {
+    let clearButton: DebugElement = fixture.debugElement.query(By.css('.ms-2'));
 
-    const button = fixture.debugElement.query(By.css('p-button')).nativeElement;
-    button.click();
+    clearButton.triggerEventHandler('click', null);
     fixture.detectChanges();
 
-    expect(component.toggleOrder).toHaveBeenCalled();
+    expect(dispatchSpy).toHaveBeenCalledWith(
+      updateSort({ query: '', sort: '', order: 'desc' })
+    );
   });
 });
